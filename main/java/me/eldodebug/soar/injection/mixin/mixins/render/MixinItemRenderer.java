@@ -25,7 +25,7 @@ import net.minecraft.item.ItemStack;
 
 @Mixin(ItemRenderer.class)
 public class MixinItemRenderer {
-	
+    
     @Shadow
     @Final
     private Minecraft mc;
@@ -42,49 +42,57 @@ public class MixinItemRenderer {
     @Shadow
     private int equippedItemSlot;
     
-	@Inject(method = "renderItemInFirstPerson", at = @At("HEAD"))
-	public void renderItemInFirstPerson(CallbackInfo ci) {
-		new EventRenderItemInFirstPerson().call();
-	}
+    @Inject(method = "renderItemInFirstPerson", at = @At("HEAD"))
+    public void renderItemInFirstPerson(CallbackInfo ci) {
+        new EventRenderItemInFirstPerson().call();
+    }
     
     @Inject(method = "renderWaterOverlayTexture", at = @At("HEAD"), cancellable = true)
     private void preRenderWaterOverlayTexture(CallbackInfo ci) {
-    	
-    	EventWaterOverlay event = new EventWaterOverlay();
-    	event.call();
-    	
-    	if(event.isCancelled()) {
-    		ci.cancel();
-    	}
+        EventWaterOverlay event = new EventWaterOverlay();
+        event.call();
+        
+        if (event.isCancelled()) {
+            ci.cancel();
+        }
     }
     
     @Inject(at = @At("HEAD"), method = "renderFireInFirstPerson", cancellable = true)
     private void renderFireInFirstPerson(CallbackInfo ci) {
-    	
-    	EventFireOverlay event = new EventFireOverlay();
-    	event.call();
-    	
-    	if(event.isCancelled()) {
-    		ci.cancel();
-    	}
+        EventFireOverlay event = new EventFireOverlay();
+        event.call();
+        
+        if (event.isCancelled()) {
+            ci.cancel();
+        }
     }
     
     @ModifyConstant(method = "renderItemInFirstPerson", constant = @Constant(floatValue = 0.0f))
     public float modifyTransformItem(float original, float partialTicks) {
-    	
+        if (mc == null || mc.thePlayer == null) return original;
+        
         AbstractClientPlayer abstractClientPlayer = mc.thePlayer;
         AnimationsMod mod = AnimationsMod.getInstance();
         
-        return mod.isToggled() && mod.getBlockHitSetting().isToggled() ? abstractClientPlayer.getSwingProgress(partialTicks) : original;
+        if (mod != null && mod.isToggled() && mod.getBlockHitSetting() != null && mod.getBlockHitSetting().isToggled()) {
+            return abstractClientPlayer.getSwingProgress(partialTicks);
+        }
+        
+        return original;
     }
     
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;renderItem(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/renderer/block/model/ItemCameraTransforms$TransformType;)V"))
     public void oldRod(ItemRenderer instance, EntityLivingBase entityIn, ItemStack heldStack, ItemCameraTransforms.TransformType transform) {
-    	
-    	AnimationsMod mod = AnimationsMod.getInstance();
-    	
-        if (mod.isToggled() && mod.getRodSetting().isToggled() && !mc.getRenderItem().shouldRenderItemIn3D(heldStack)) {
-        	
+        if (mc == null || heldStack == null) {
+            if (instance != null && entityIn != null && heldStack != null) {
+                instance.renderItem(entityIn, heldStack, ItemCameraTransforms.TransformType.FIRST_PERSON);
+            }
+            return;
+        }
+        
+        AnimationsMod mod = AnimationsMod.getInstance();
+        
+        if (mod != null && mod.isToggled() && mod.getRodSetting() != null && mod.getRodSetting().isToggled() && !mc.getRenderItem().shouldRenderItemIn3D(heldStack)) {
             if (heldStack.getItem().shouldRotateAroundWhenRendering()) {
                 GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
             }
@@ -105,10 +113,11 @@ public class MixinItemRenderer {
     
     @Inject(method = "updateEquippedItem", at = @At("HEAD"), cancellable = true)
     private void preUpdateEquippedItem(CallbackInfo ci) {
-    	
-    	AnimationsMod mod = AnimationsMod.getInstance();
-    	
-        if (mod.isToggled() && mod.getItemSwitchSetting().isToggled()) {
+        if (mc == null || mc.thePlayer == null) return;
+        
+        AnimationsMod mod = AnimationsMod.getInstance();
+        
+        if (mod != null && mod.isToggled() && mod.getItemSwitchSetting() != null && mod.getItemSwitchSetting().isToggled()) {
             ci.cancel();
             prevEquippedProgress = equippedProgress;
             EntityPlayerSP player = mc.thePlayer;

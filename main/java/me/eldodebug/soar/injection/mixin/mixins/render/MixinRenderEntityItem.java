@@ -17,20 +17,26 @@ import net.minecraft.item.ItemStack;
 @Mixin(RenderEntityItem.class)
 public abstract class MixinRenderEntityItem {
 
-	@Shadow
+    @Shadow
     private RenderItem itemRenderer;
-	
-	@Shadow
+    
+    @Shadow
     public abstract int func_177078_a(ItemStack stack);
-	
-	@Overwrite
-	private int func_177077_a(EntityItem itemIn, double p_177077_2_, double p_177077_4_, double p_177077_6_, float p_177077_8_, IBakedModel p_177077_9_) {
-		return RenderEntityItemHook.func_177077_a(itemIn, p_177077_2_, p_177077_4_, p_177077_6_, p_177077_8_, p_177077_9_, func_177078_a(itemIn.getEntityItem()));
-	}
-	
+    
+    @Overwrite
+    private int func_177077_a(EntityItem itemIn, double p_177077_2_, double p_177077_4_, double p_177077_6_, float p_177077_8_, IBakedModel p_177077_9_) {
+        if (itemIn == null || itemIn.getEntityItem() == null) return 0;
+        
+        return RenderEntityItemHook.func_177077_a(itemIn, p_177077_2_, p_177077_4_, p_177077_6_, p_177077_8_, p_177077_9_, func_177078_a(itemIn.getEntityItem()));
+    }
+    
     @Redirect(method = {"doRender(Lnet/minecraft/entity/item/EntityItem;DDDFF)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/RenderItem;renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/resources/model/IBakedModel;)V"))
     public void stopItemModelRender(RenderItem instance, ItemStack stack, IBakedModel model) {
-        if (Items2DMod.getInstance().isToggled() && !model.isGui3d()) {
+        if (instance == null || stack == null || model == null) return;
+        
+        Items2DMod mod = Items2DMod.getInstance();
+        
+        if (mod != null && mod.isToggled() && !model.isGui3d()) {
             RenderEntityItemHook.oldItemRender(instance, model, stack);
         } else {
             this.itemRenderer.renderItem(stack, model);

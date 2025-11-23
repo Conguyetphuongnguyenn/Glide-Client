@@ -10,9 +10,10 @@ import net.minecraft.client.multiplayer.ServerData;
 
 @Mixin(GuiMultiplayer.class)
 public class MixinGuiMultiplayer extends GuiScreen {
-	
-	@Overwrite
-    private void connectToServer(ServerData server){
+
+    @Overwrite
+    private void connectToServer(ServerData server) {
+        if(mc == null || server == null) return;
         mc.displayGuiScreen(new GuiFixConnecting(this, mc, server));
     }
 }

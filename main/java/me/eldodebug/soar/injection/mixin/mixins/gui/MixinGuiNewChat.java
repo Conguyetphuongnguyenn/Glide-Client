@@ -41,7 +41,7 @@ public abstract class MixinGuiNewChat extends Gui {
 
     @Shadow
     public abstract int getLineCount();
-    
+
     @Shadow
     private boolean isScrolled;
 
@@ -50,7 +50,7 @@ public abstract class MixinGuiNewChat extends Gui {
 
     @Shadow
     public abstract void printChatMessageWithOptionalDeletion(IChatComponent chatComponent, int chatLineId);
-    
+
     private float percentComplete;
     private int newLines;
     private long prevMillis = System.currentTimeMillis();
@@ -59,86 +59,98 @@ public abstract class MixinGuiNewChat extends Gui {
 
     private String lastMessage = "";
     private int sameMessageAmount, line;
-    
+
     @Unique
     private ChatLine drawingChatLine = null;
-    
+
     private void updatePercentage(long diff) {
         if (percentComplete < 1) {
-        	percentComplete += (ChatMod.getInstance().getSmoothSpeedSetting().getValueFloat() / 1000) * (float) diff;
+            ChatMod mod = ChatMod.getInstance();
+            if(mod != null && mod.getSmoothSpeedSetting() != null) {
+                float speed = mod.getSmoothSpeedSetting().getValueFloat();
+                percentComplete += (speed / 1000) * (float) diff;
+            }
         }
         percentComplete = MathUtils.clamp(percentComplete, 0, 1);
     }
 
     @Inject(method = "drawChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/ChatLine;getChatComponent()Lnet/minecraft/util/IChatComponent;"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void getChatLine(int updateCounter, CallbackInfo ci, int i, boolean bl, int j, int k, float f, float g, int l, int m, ChatLine chatLine, int n, double d, int o, int p, int q) {
-    	drawingChatLine = chatLine;
+        drawingChatLine = chatLine;
     }
 
     @Redirect(method = "drawChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;drawStringWithShadow(Ljava/lang/String;FFI)I"))
     private int redirectText(FontRenderer instance, String text, float x, float y, int color) {
-    	
-    	ChatMod mod = ChatMod.getInstance();
-		boolean toggle = mod.isToggled() && mod.getSmoothSetting().isToggled();
-		int lastOpacity = 0;
-		
+        if(instance == null || text == null) return 0;
+        
+        ChatMod mod = ChatMod.getInstance();
+        if(mod == null) {
+            return instance.drawStringWithShadow(text, x, y, color);
+        }
+        
+        boolean toggle = mod.isToggled() && mod.getSmoothSetting().isToggled();
+        int lastOpacity = color;
+
         if (toggle && lineBeingDrawn <= newLines) {
             int opacity = (color >> 24) & 0xFF;
             opacity *= animationPercent;
             lastOpacity = (color & ~(0xFF << 24)) | (opacity << 24);
-        } else {
-        	lastOpacity = color;
         }
-        
-    	if(mod.isToggled() && mod.getHeadSetting().isToggled()) {
-    		return GuiNewChatHook.drawStringWithHead(drawingChatLine, text, x, y, lastOpacity);
-    	}
-    	
+
+        if(mod.isToggled() && mod.getHeadSetting().isToggled()) {
+            return GuiNewChatHook.drawStringWithHead(drawingChatLine, text, x, y, lastOpacity);
+        }
+
         return instance.drawStringWithShadow(text, x, y, lastOpacity);
     }
-    
-    @Overwrite
-	public void printChatMessage(IChatComponent component) {
-    	
-    	ChatMod mod = ChatMod.getInstance();
-    	
-		if(mod.isToggled() && mod.getCompactSetting().isToggled()) {
-			
-	    	if (component.getUnformattedText().equals(lastMessage)) {
-	    		mc.ingameGUI.getChatGUI().deleteChatLine(line);
-	    		sameMessageAmount++;
-	    		lastMessage = component.getUnformattedText();
-	    		component.appendText(ChatFormatting.WHITE + " [x" + sameMessageAmount + "]");
-	    	} else {
-	    		sameMessageAmount = 1;
-	    		lastMessage = component.getUnformattedText();
-	    	}
-	 
-	    	line++;
-	 
-	    	if (line > 256) {
-	    		line = 0;
-	    	}
-	    	
-	    	printChatMessageWithOptionalDeletion(component, line);
-	    	
-	    	return;
-		}
-		
-		printChatMessageWithOptionalDeletion(component, 0);
-	}
 
-	@Redirect(method = "setChatLine", at = @At(value = "INVOKE", target = "Ljava/util/List;size()I"))
-	public int getSize(List<?> instance) {
-		
-    	ChatMod mod = ChatMod.getInstance();
-    	
-		if(mod.isToggled() && mod.getInfinitySetting().isToggled()) {
-			return 0;
-		}
-		
-		return instance.size();
-	}
+    @Overwrite
+    public void printChatMessage(IChatComponent component) {
+        if(component == null) return;
+        
+        ChatMod mod = ChatMod.getInstance();
+
+        if(mod != null && mod.isToggled() && mod.getCompactSetting().isToggled()) {
+            String unformatted = component.getUnformattedText();
+            if(unformatted == null) unformatted = "";
+            
+            if (unformatted.equals(lastMessage)) {
+                if(mc != null && mc.ingameGUI != null && mc.ingameGUI.getChatGUI() != null) {
+                    mc.ingameGUI.getChatGUI().deleteChatLine(line);
+                }
+                sameMessageAmount++;
+                lastMessage = unformatted;
+                component.appendText(ChatFormatting.WHITE + " [x" + sameMessageAmount + "]");
+            } else {
+                sameMessageAmount = 1;
+                lastMessage = unformatted;
+            }
+
+            line++;
+
+            if (line > 256) {
+                line = 0;
+            }
+
+            printChatMessageWithOptionalDeletion(component, line);
+            return;
+        }
+
+        printChatMessageWithOptionalDeletion(component, 0);
+    }
+
+    @Redirect(method = "setChatLine", at = @At(value = "INVOKE", target = "Ljava/util/List;size()I"))
+    public int getSize(List<?> instance) {
+        if(instance == null) return 0;
+        
+        ChatMod mod = ChatMod.getInstance();
+
+        if(mod != null && mod.isToggled() && mod.getInfinitySetting().isToggled()) {
+            return 0;
+        }
+
+        return instance.size();
+    }
 
     @Inject(method = "drawChat", at = @At("HEAD"), cancellable = true)
     private void modifyChatRendering(CallbackInfo ci) {
@@ -149,32 +161,31 @@ public abstract class MixinGuiNewChat extends Gui {
         float t = percentComplete;
         animationPercent = MathUtils.clamp(1 - (--t) * t * t * t, 0, 1);
     }
-    
+
     @Inject(method = "drawChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;pushMatrix()V", ordinal = 0, shift = At.Shift.AFTER))
     private void translate(CallbackInfo ci) {
-    	
-    	ChatMod mod = ChatMod.getInstance();
+        ChatMod mod = ChatMod.getInstance();
         float y = 0;
-        
-        if (mod.isToggled() && mod.getSmoothSetting().isToggled() && !this.isScrolled) {
+
+        if (mod != null && mod.isToggled() && mod.getSmoothSetting().isToggled() && !this.isScrolled) {
             y += (9 - 9 * animationPercent) * this.getChatScale();
         }
-        
-        if(ChatTranslateMod.getInstance().isToggled() && mc.currentScreen instanceof GuiChat) {
-        	y = y - 8;
+
+        ChatTranslateMod translateMod = ChatTranslateMod.getInstance();
+        if(translateMod != null && translateMod.isToggled() && mc != null && mc.currentScreen instanceof GuiChat) {
+            y = y - 8;
         }
-        
+
         GlStateManager.translate(0, y, 0);
     }
 
     @Redirect(method = "drawChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiNewChat;drawRect(IIIII)V", ordinal = 0))
     private void transparentBackground(int left, int top, int right, int bottom, int color) {
-    	
-    	ChatMod mod = ChatMod.getInstance();
-    	
-    	if(!mod.isToggled() || (mod.isToggled() && mod.getBackgroundSetting().isToggled())) {
-        	drawRect(left, top, right, bottom, color);
-    	}
+        ChatMod mod = ChatMod.getInstance();
+
+        if(mod == null || !mod.isToggled() || (mod.isToggled() && mod.getBackgroundSetting().isToggled())) {
+            drawRect(left, top, right, bottom, color);
+        }
     }
 
     @ModifyArg(method = "drawChat", at = @At(value = "INVOKE", target = "Ljava/util/List;get(I)Ljava/lang/Object;", ordinal = 0, remap = false), index = 0)
@@ -190,32 +201,36 @@ public abstract class MixinGuiNewChat extends Gui {
 
     @ModifyVariable(method = "setChatLine", at = @At("STORE"), ordinal = 0)
     private List<IChatComponent> setNewLines(List<IChatComponent> original) {
+        if(original == null) return null;
         newLines = original.size() - 1;
         return original;
     }
-    
+
     @ModifyVariable(method = "getChatComponent", at = @At(value = "STORE", ordinal = 0), ordinal = 4)
     private int modifyY(int original) {
-    	
-        if(ChatTranslateMod.getInstance().isToggled() && mc.currentScreen instanceof GuiChat) {
-        	return original - 8;
-        }
+        ChatTranslateMod mod = ChatTranslateMod.getInstance();
         
+        if(mod != null && mod.isToggled() && mc != null && mc.currentScreen instanceof GuiChat) {
+            return original - 8;
+        }
+
         return original;
     }
-    
+
     @Inject(method = "getChatComponent", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/GuiNewChat;scrollPos:I"), cancellable = true, locals = LocalCapture.CAPTURE_FAILSOFT)
     private void getChatComponent(int mouseX, int mouseY, CallbackInfoReturnable<IChatComponent> cir, ScaledResolution scaledresolution, int i, float f, int j, int k, int l) {
+        if(mc == null || mc.fontRendererObj == null) return;
+        
         int line = k / mc.fontRendererObj.FONT_HEIGHT;
         if (line >= getLineCount()) {
-        	cir.setReturnValue(null);
+            cir.setReturnValue(null);
         }
     }
-    
+
     @Redirect(method = "deleteChatLine", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/ChatLine;getChatLineID()I"))
     private int adeleteChatLine(ChatLine instance) {
         if (instance == null) {
-        	return -1;
+            return -1;
         }
         return instance.getChatLineID();
     }

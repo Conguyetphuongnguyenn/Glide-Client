@@ -18,22 +18,33 @@ import net.minecraft.util.IChatComponent;
 
 @Mixin(ChatLine.class)
 public class MixinChatLine implements IMixinChatLine {
-	
+
     private NetworkPlayerInfo playerInfo;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(int i, IChatComponent iChatComponent, int j, CallbackInfo ci) {
-    	
+        if(iChatComponent == null) return;
+        
         chatLines.add(new WeakReference<>((ChatLine) (Object) this));
-        NetHandlerPlayClient netHandler = Minecraft.getMinecraft().getNetHandler();
+        
+        Minecraft mc = Minecraft.getMinecraft();
+        if(mc == null) return;
+        
+        NetHandlerPlayClient netHandler = mc.getNetHandler();
         if (netHandler == null) return;
+        
         Map<String, NetworkPlayerInfo> nicknameCache = new HashMap<>();
         
         try {
-            for (String word : iChatComponent.getFormattedText().split("(§.)|\\W")) {
-            	
-                if (word.isEmpty()) {
-                	continue;
+            String formattedText = iChatComponent.getFormattedText();
+            if(formattedText == null) return;
+            
+            String[] words = formattedText.split("(Â§.)|\\W");
+            if(words == null) return;
+            
+            for (String word : words) {
+                if (word == null || word.isEmpty()) {
+                    continue;
                 }
                 
                 playerInfo = netHandler.getPlayerInfo(word);
@@ -43,18 +54,23 @@ public class MixinChatLine implements IMixinChatLine {
                 }
                 
                 if (playerInfo != null) {
-                	break;
+                    break;
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     private static NetworkPlayerInfo getPlayerFromNickname(String word, NetHandlerPlayClient connection, Map<String, NetworkPlayerInfo> nicknameCache) {
-    	
+        if(word == null || connection == null || nicknameCache == null) {
+            return null;
+        }
+        
         if (nicknameCache.isEmpty()) {
             for (NetworkPlayerInfo p : connection.getPlayerInfoMap()) {
-            	
+                if(p == null) continue;
+                
                 IChatComponent displayName = p.getDisplayName();
                 
                 if (displayName != null) {

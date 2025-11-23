@@ -19,37 +19,35 @@ import net.minecraft.world.World;
 @Mixin(EntityLivingBase.class)
 public abstract class MixinEntityLivingBase extends Entity implements IMixinEntityLivingBase {
 
-	@Shadow
-	public abstract int getArmSwingAnimationEnd();
-	
-	public MixinEntityLivingBase(World worldIn) {
-		super(worldIn);
-	}
+    @Shadow
+    public abstract int getArmSwingAnimationEnd();
+
+    public MixinEntityLivingBase(World worldIn) {
+        super(worldIn);
+    }
 
     @Inject(method = "onEntityUpdate", at = @At("TAIL"))
     public void onEntityUpdate(CallbackInfo ci) {
-    	new EventLivingUpdate((EntityLivingBase) (Object) this).call();
+        new EventLivingUpdate((EntityLivingBase) (Object) this).call();
     }
-    
-	@Inject(method = "getArmSwingAnimationEnd", at = @At("HEAD"), cancellable = true)
-	public void changeSwingSpeed(CallbackInfoReturnable<Integer> cir) {
-		
-		SlowSwingMod mod = SlowSwingMod.getInstance();
-		
-		if(mod.isToggled()) {
-			cir.setReturnValue(mod.getDelaySetting().getValueInt());
-		}
-	}
-	
+
+    @Inject(method = "getArmSwingAnimationEnd", at = @At("HEAD"), cancellable = true)
+    public void changeSwingSpeed(CallbackInfoReturnable<Integer> cir) {
+        SlowSwingMod mod = SlowSwingMod.getInstance();
+        if(mod != null && mod.isToggled()) {
+            cir.setReturnValue(mod.getDelaySetting().getValueInt());
+        }
+    }
+
     @Inject(method = "getLook", at = @At("HEAD"), cancellable = true)
     private void mouseDelayFix(float partialTicks, CallbackInfoReturnable<Vec3> cir) {
         if ((EntityLivingBase) (Object) this instanceof EntityPlayerSP) {
             cir.setReturnValue(super.getLook(partialTicks));
         }
     }
-    
-	@Override
-	public int getArmSwingAnimation() {
-		return getArmSwingAnimationEnd();
-	}
+
+    @Override
+    public int getArmSwingAnimation() {
+        return getArmSwingAnimationEnd();
+    }
 }

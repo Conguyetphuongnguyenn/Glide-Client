@@ -17,34 +17,35 @@ import net.minecraft.util.ResourceLocation;
 @Mixin(WorldClient.class)
 public class MixinWorldClient {
 
-	@Shadow 
-	@Final
-	private Minecraft mc;
+    @Shadow 
+    @Final
+    private Minecraft mc;
     
-	@Inject(method = "sendQuittingDisconnectingPacket", at = @At("HEAD"))
+    @Inject(method = "sendQuittingDisconnectingPacket", at = @At("HEAD"))
     public void onLeaveServer(CallbackInfo ci) {
-		new EventLeaveServer().call();
-	}
-	
-	@Inject(method = "playSound", at = @At(value = "HEAD"), cancellable = true)
-	public void handlePlaySound(double x, double y, double z, String soundName, float volume, float pitch, boolean distanceDelay, CallbackInfo ci) {
-		
-		EventPlaySound event = new EventPlaySound(soundName, volume, pitch, volume, pitch);
-		event.call();
-		
-		if(event.getPitch() != event.getOriginalPitch() || event.getVolume() != event.getOriginalVolume()) {
-			ci.cancel();
-			volume = event.getVolume();
-			pitch = event.getPitch();
-			double distanceSq = mc.getRenderViewEntity().getDistanceSq(x, y, z);
-			
-			PositionedSoundRecord positionedsoundrecord = new PositionedSoundRecord(new ResourceLocation(soundName), volume, pitch, (float) x, (float) y, (float) z);
+        new EventLeaveServer().call();
+    }
+    
+    @Inject(method = "playSound", at = @At(value = "HEAD"), cancellable = true)
+    public void handlePlaySound(double x, double y, double z, String soundName, float volume, float pitch, boolean distanceDelay, CallbackInfo ci) {
+        EventPlaySound event = new EventPlaySound(soundName, volume, pitch, volume, pitch);
+        event.call();
+        
+        if (event.getPitch() != event.getOriginalPitch() || event.getVolume() != event.getOriginalVolume()) {
+            if (mc == null || mc.getRenderViewEntity() == null || mc.getSoundHandler() == null) return;
+            
+            ci.cancel();
+            volume = event.getVolume();
+            pitch = event.getPitch();
+            double distanceSq = mc.getRenderViewEntity().getDistanceSq(x, y, z);
+            
+            PositionedSoundRecord positionedsoundrecord = new PositionedSoundRecord(new ResourceLocation(soundName), volume, pitch, (float) x, (float) y, (float) z);
 
-			if(distanceDelay && distanceSq > 100.0D) {
-				mc.getSoundHandler().playDelayedSound(positionedsoundrecord, (int) (Math.sqrt(distanceSq) / 40.0D * 20.0D));
-			} else {
-				mc.getSoundHandler().playSound(positionedsoundrecord);
-			}
-		}
-	}
+            if (distanceDelay && distanceSq > 100.0D) {
+                mc.getSoundHandler().playDelayedSound(positionedsoundrecord, (int) (Math.sqrt(distanceSq) / 40.0D * 20.0D));
+            } else {
+                mc.getSoundHandler().playSound(positionedsoundrecord);
+            }
+        }
+    }
 }

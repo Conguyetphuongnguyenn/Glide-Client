@@ -19,56 +19,57 @@ import net.minecraft.network.NetworkManager;
 
 @Mixin(GuiPlayerTabOverlay.class)
 public class MixinGuiPlayerTabOverlay {
-	
-	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;drawStringWithShadow(Ljava/lang/String;FFI)I", ordinal = 2))
-	public int renderGlideIcon(FontRenderer instance, String text, float x, float y, int color) {
-		
-		int i = instance.drawStringWithShadow(text, x, y, color);
-		
-		return i;
-	}
-	
-	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/WorldClient;getPlayerEntityByUUID(Ljava/util/UUID;)Lnet/minecraft/entity/player/EntityPlayer;"))
-	public EntityPlayer removePlayerHead(WorldClient instance, UUID uuid) {
-		
-		if(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getHeadSetting().isToggled()) {
-			return null;
-		}
 
-		return instance.getPlayerEntityByUUID(uuid);
-	}
+    @Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/FontRenderer;drawStringWithShadow(Ljava/lang/String;FFI)I", ordinal = 2))
+    public int renderGlideIcon(FontRenderer instance, String text, float x, float y, int color) {
+        if(instance == null || text == null) return 0;
+        return instance.drawStringWithShadow(text, x, y, color);
+    }
 
-	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isIntegratedServerRunning()Z"))
-	public boolean removePlayerHead(Minecraft instance) {
-		return instance.isIntegratedServerRunning() && showHeads();
-	}
+    @Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/WorldClient;getPlayerEntityByUUID(Ljava/util/UUID;)Lnet/minecraft/entity/player/EntityPlayer;"))
+    public EntityPlayer removePlayerHead(WorldClient instance, UUID uuid) {
+        if(instance == null) return null;
+        
+        TabEditorMod mod = TabEditorMod.getInstance();
+        if(mod != null && mod.isToggled() && !mod.getHeadSetting().isToggled()) {
+            return null;
+        }
 
-	@Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkManager;getIsencrypted()Z"))
-	public boolean removePlayerHead(NetworkManager instance) {
-		return instance.getIsencrypted() && showHeads();
-	}
-	
-	@ModifyConstant(method = "renderPlayerlist", constant = @Constant(intValue = Integer.MIN_VALUE))
-	public int removeBackground(int original) {
-		
-		if(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getBackgroundSetting().isToggled()) {
-			return new Color(0, 0, 0, 0).getRGB();
-		}
+        return instance.getPlayerEntityByUUID(uuid);
+    }
 
-		return original;
-	}
+    @Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isIntegratedServerRunning()Z"))
+    public boolean removePlayerHead(Minecraft instance) {
+        if(instance == null) return false;
+        return instance.isIntegratedServerRunning() && showHeads();
+    }
 
-	@ModifyConstant(method = "renderPlayerlist", constant = @Constant(intValue = 553648127))
-	public int removeBackground2(int original) {
-		
-		if(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getBackgroundSetting().isToggled()) {
-			return new Color(0, 0, 0, 0).getRGB();
-		}
+    @Redirect(method = "renderPlayerlist", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkManager;getIsencrypted()Z"))
+    public boolean removePlayerHead(NetworkManager instance) {
+        if(instance == null) return false;
+        return instance.getIsencrypted() && showHeads();
+    }
 
-		return original;
-	}
-	
-	private boolean showHeads() {
-		return !(TabEditorMod.getInstance().isToggled() && !TabEditorMod.getInstance().getHeadSetting().isToggled());
-	}
+    @ModifyConstant(method = "renderPlayerlist", constant = @Constant(intValue = Integer.MIN_VALUE))
+    public int removeBackground(int original) {
+        TabEditorMod mod = TabEditorMod.getInstance();
+        if(mod != null && mod.isToggled() && !mod.getBackgroundSetting().isToggled()) {
+            return new Color(0, 0, 0, 0).getRGB();
+        }
+        return original;
+    }
+
+    @ModifyConstant(method = "renderPlayerlist", constant = @Constant(intValue = 553648127))
+    public int removeBackground2(int original) {
+        TabEditorMod mod = TabEditorMod.getInstance();
+        if(mod != null && mod.isToggled() && !mod.getBackgroundSetting().isToggled()) {
+            return new Color(0, 0, 0, 0).getRGB();
+        }
+        return original;
+    }
+
+    private boolean showHeads() {
+        TabEditorMod mod = TabEditorMod.getInstance();
+        return !(mod != null && mod.isToggled() && !mod.getHeadSetting().isToggled());
+    }
 }

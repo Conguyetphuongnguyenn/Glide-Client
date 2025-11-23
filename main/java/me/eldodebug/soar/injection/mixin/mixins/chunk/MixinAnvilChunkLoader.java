@@ -18,8 +18,14 @@ import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 @Mixin(AnvilChunkLoader.class)
 public class MixinAnvilChunkLoader {
 
-    @Inject(method = "loadChunk", at = { @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompressedStreamTools;read(Ljava/io/DataInputStream;)Lnet/minecraft/nbt/NBTTagCompound;", shift = At.Shift.AFTER) }, locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void closeInputstream(final World worldIn, final int x, final int z, final CallbackInfoReturnable<Chunk> cir, final ChunkCoordIntPair pair, final NBTTagCompound nbt, final DataInputStream inputStream) throws IOException {
-        inputStream.close();
+    @Inject(
+        method = "loadChunk", 
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/CompressedStreamTools;read(Ljava/io/DataInputStream;)Lnet/minecraft/nbt/NBTTagCompound;", shift = At.Shift.AFTER), 
+        locals = LocalCapture.CAPTURE_FAILEXCEPTION
+    )
+    private void closeInputStream(World worldIn, int x, int z, CallbackInfoReturnable<Chunk> cir, ChunkCoordIntPair pair, NBTTagCompound nbt, DataInputStream inputStream) throws IOException {
+        if (inputStream != null) {
+            inputStream.close();
+        }
     }
 }

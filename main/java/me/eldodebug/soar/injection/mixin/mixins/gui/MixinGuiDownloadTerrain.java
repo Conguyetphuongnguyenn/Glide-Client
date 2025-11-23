@@ -10,9 +10,11 @@ import net.minecraft.client.gui.GuiScreen;
 @Mixin(GuiDownloadTerrain.class)
 public class MixinGuiDownloadTerrain extends GuiScreen {
 
-	@Overwrite
-	public void initGui() {
-		this.buttonList.clear();
-		new EventLoadWorld().call();
-	}
+    private static final EventLoadWorld CACHED_EVENT_LOAD_WORLD = new EventLoadWorld();
+
+    @Overwrite
+    public void initGui() {
+        this.buttonList.clear();
+        CACHED_EVENT_LOAD_WORLD.call();
+    }
 }

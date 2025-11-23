@@ -29,7 +29,7 @@ public class Animation_Swimming extends MoBendsAnimation {
 		foreArmStretch-=1.0f;
 		foreArmStretch = MoBendsGUtil.min(foreArmStretch, 0.0f);
 		
-		if(data.motion.x == 0 & data.motion.z == 0){
+		if(data.motion.x == 0 && data.motion.z == 0){
 			armSway = (MathHelper.cos(data.ticks*0.0825f)+1.0f)/2.0f;
 			armSway2 = (-MathHelper.sin(data.ticks*0.0825f)+1.0f)/2.0f;
 			legFlap = MathHelper.cos(data.ticks*0.2625f);
@@ -69,8 +69,8 @@ public class Animation_Swimming extends MoBendsAnimation {
 			((ModelRendererBends)model.bipedLeftArm).pre_rotation.setSmoothZ((armSway*-20));
 			((ModelRendererBends)model.bipedRightArm).pre_rotation.setSmoothZ(-(armSway*-20));
 			
-			((ModelRendererBends)model.bipedLeftForeArm).rotation.setSmoothX((foreArmSway < 0.55f | foreArmSway > 0.9) ? foreArmStretch*-60.0f : -60,0.3f);
-			((ModelRendererBends)model.bipedRightForeArm).rotation.setSmoothX((foreArmSway < 0.55f | foreArmSway > 0.9) ? foreArmStretch*-60.0f : -60,0.3f);
+			((ModelRendererBends)model.bipedLeftForeArm).rotation.setSmoothX((foreArmSway < 0.55f || foreArmSway > 0.9) ? foreArmStretch*-60.0f : -60,0.3f);
+			((ModelRendererBends)model.bipedRightForeArm).rotation.setSmoothX((foreArmSway < 0.55f || foreArmSway > 0.9) ? foreArmStretch*-60.0f : -60,0.3f);
 			
 			((ModelRendererBends)model.bipedLeftLeg).rotation.setSmoothX((legFlap)*40,0.3f);
 			((ModelRendererBends)model.bipedRightLeg).rotation.setSmoothX((-legFlap)*40,0.3f);

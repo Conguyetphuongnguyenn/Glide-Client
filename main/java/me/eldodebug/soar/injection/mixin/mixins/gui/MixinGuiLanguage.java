@@ -10,6 +10,10 @@ public class MixinGuiLanguage extends GuiScreen {
 
     @Override
     public void onGuiClosed() {
-        mc.ingameGUI.getChatGUI().refreshChat();
+        if(mc == null || mc.ingameGUI == null) return;
+        
+        if(mc.ingameGUI.getChatGUI() != null) {
+            mc.ingameGUI.getChatGUI().refreshChat();
+        }
     }
 }

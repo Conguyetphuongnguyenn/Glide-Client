@@ -12,26 +12,31 @@ import net.minecraft.client.renderer.WorldRenderer;
 @Mixin(ModelBox.class)
 public class MixinModelBox {
 
-	@Shadow
+    @Shadow
     private TexturedQuad[] quadList;
-	
-	@Overwrite
+
+    @Overwrite
     public void render(WorldRenderer renderer, float scale) {
-		
-		boolean b = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-		
-		if(b) {
-			draw(renderer, scale);
-		}else {
-			GL11.glEnable(GL11.GL_CULL_FACE);
-			draw(renderer, scale);
-			GL11.glDisable(GL11.GL_CULL_FACE);
-		}
-    }
-	
-	private void draw(WorldRenderer renderer, float scale) {
-        for (int i = 0; i < this.quadList.length; ++i) {
-            this.quadList[i].draw(renderer, scale);
+        if(renderer == null || quadList == null) return;
+        
+        boolean b = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+
+        if(b) {
+            draw(renderer, scale);
+        } else {
+            GL11.glEnable(GL11.GL_CULL_FACE);
+            draw(renderer, scale);
+            GL11.glDisable(GL11.GL_CULL_FACE);
         }
-	}
+    }
+
+    private void draw(WorldRenderer renderer, float scale) {
+        if(quadList == null || renderer == null) return;
+        
+        for (int i = 0; i < this.quadList.length; ++i) {
+            if(this.quadList[i] != null) {
+                this.quadList[i].draw(renderer, scale);
+            }
+        }
+    }
 }

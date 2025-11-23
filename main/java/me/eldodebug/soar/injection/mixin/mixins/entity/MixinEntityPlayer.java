@@ -17,51 +17,50 @@ import net.minecraft.entity.player.EntityPlayer;
 public class MixinEntityPlayer implements IMixinEntityPlayer {
 
     private CustomizableModelPart headLayer;
-	private CustomizableModelPart[] skinLayer;
-	
-    private StickSimulation stickSimulation = new StickSimulation();
-    
-	@Inject(method = "attackTargetEntityWithCurrentItem", at = @At("HEAD"))
-	public void attackEntity(Entity entity, CallbackInfo ci) {
-		if(entity.canAttackWithItem()) {
-			new EventAttackEntity(entity).call();
-		}
-	}
-	
-	@Inject(method = "jump", at = @At("HEAD"))
+    private CustomizableModelPart[] skinLayer;
+    private final StickSimulation stickSimulation = new StickSimulation();
+
+    @Inject(method = "attackTargetEntityWithCurrentItem", at = @At("HEAD"))
+    public void attackEntity(Entity entity, CallbackInfo ci) {
+        if(entity != null && entity.canAttackWithItem()) {
+            new EventAttackEntity(entity).call();
+        }
+    }
+
+    @Inject(method = "jump", at = @At("HEAD"))
     public void preJump(CallbackInfo ci) {
-		new EventJump().call();
-	}
-	
+        new EventJump().call();
+    }
+
     @Inject(method = "onUpdate", at = @At("HEAD"))
     private void moveCloakUpdate(CallbackInfo info) {
         if((Object)this instanceof EntityPlayer) {
             simulate((EntityPlayer)(Object)this);
         }
     }
-    
+
     @Override
     public StickSimulation getSimulation() {
         return stickSimulation;
     }
-    
-	@Override
-	public CustomizableModelPart[] getSkinLayers() {
-		return skinLayer;
-	}
-	
-	@Override
-	public void setupSkinLayers(CustomizableModelPart[] box) {
-		this.skinLayer = box;
-	}
-	
-	@Override
-	public CustomizableModelPart getHeadLayers() {
-		return headLayer;
-	}
-	
-	@Override
-	public void setupHeadLayers(CustomizableModelPart box) {
-		this.headLayer = box;
-	}
+
+    @Override
+    public CustomizableModelPart[] getSkinLayers() {
+        return skinLayer;
+    }
+
+    @Override
+    public void setupSkinLayers(CustomizableModelPart[] box) {
+        this.skinLayer = box;
+    }
+
+    @Override
+    public CustomizableModelPart getHeadLayers() {
+        return headLayer;
+    }
+
+    @Override
+    public void setupHeadLayers(CustomizableModelPart box) {
+        this.headLayer = box;
+    }
 }

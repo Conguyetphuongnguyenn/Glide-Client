@@ -12,18 +12,19 @@ import net.minecraft.inventory.Container;
 @Mixin(InventoryEffectRenderer.class)
 public abstract class MixinInventoryEffectRenderer extends GuiContainer {
 
-	public MixinInventoryEffectRenderer(Container inventorySlotsIn) {
-		super(inventorySlotsIn);
-	}
+    public MixinInventoryEffectRenderer(Container inventorySlotsIn) {
+        super(inventorySlotsIn);
+    }
 
-	@Redirect(method = "updateActivePotionEffects", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/InventoryEffectRenderer;guiLeft:I", ordinal = 0))
-	public void preventPotionShift(InventoryEffectRenderer instance, int value) {
-		
-		if(InventoryMod.getInstance().isToggled() && InventoryMod.getInstance().getPreventPotionShiftSetting().isToggled()) {
-			guiLeft = (width - xSize) / 2;
-			return;
-		}
+    @Redirect(method = "updateActivePotionEffects", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/InventoryEffectRenderer;guiLeft:I", ordinal = 0))
+    public void preventPotionShift(InventoryEffectRenderer instance, int value) {
+        InventoryMod mod = InventoryMod.getInstance();
+        
+        if (mod != null && mod.isToggled() && mod.getPreventPotionShiftSetting() != null && mod.getPreventPotionShiftSetting().isToggled()) {
+            guiLeft = (width - xSize) / 2;
+            return;
+        }
 
-		guiLeft = value;
-	}
+        guiLeft = value;
+    }
 }

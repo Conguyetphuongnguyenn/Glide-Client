@@ -38,15 +38,20 @@ public abstract class MixinLayerHeldItem {
 
     @Overwrite
     public void doRenderLayer(EntityLivingBase entitylivingbaseIn, float f, float g, float partialTicks, float h, float i, float j, float scale) {
-    	
-    	AnimationsMod mod = AnimationsMod.getInstance();
-    	BooleanSetting sneak = mod.getSneakSetting();
-        ItemStack itemStack = entitylivingbaseIn.getHeldItem();
+        if(entitylivingbaseIn == null || livingEntityRenderer == null) return;
         
+        AnimationsMod mod = AnimationsMod.getInstance();
+        if(mod == null) return;
+        
+        BooleanSetting sneak = mod.getSneakSetting();
+        if(sneak == null) return;
+        
+        ItemStack itemStack = entitylivingbaseIn.getHeldItem();
+
         if (itemStack != null) {
             GlStateManager.pushMatrix();
 
-            if (this.livingEntityRenderer.getMainModel().isChild) {
+            if (this.livingEntityRenderer.getMainModel() != null && this.livingEntityRenderer.getMainModel().isChild) {
                 float k = 0.5F;
                 GlStateManager.translate(0.0F, 0.625F, 0.0F);
                 GlStateManager.rotate(-20.0F, -1.0F, 0.0F, 0.0F);
@@ -57,50 +62,67 @@ public abstract class MixinLayerHeldItem {
                 GlStateManager.translate(0.0F, 0.203125F, 0.0F);
             }
 
-            ((ModelBiped)this.livingEntityRenderer.getMainModel()).postRenderArm(0.0625F);
-            GlStateManager.translate(-0.0625F, 0.4375F, 0.0625F);
+            if(this.livingEntityRenderer.getMainModel() instanceof ModelBiped) {
+                ((ModelBiped)this.livingEntityRenderer.getMainModel()).postRenderArm(0.0625F);
+            }
             
-            if (entitylivingbaseIn instanceof EntityPlayer && ((EntityPlayer) entitylivingbaseIn).fishEntity != null) {
-                itemStack = new ItemStack(Items.fishing_rod, 0);
+            GlStateManager.translate(-0.0625F, 0.4375F, 0.0625F);
+
+            if (entitylivingbaseIn instanceof EntityPlayer) {
+                EntityPlayer player = (EntityPlayer) entitylivingbaseIn;
+                if(player.fishEntity != null) {
+                    itemStack = new ItemStack(Items.fishing_rod, 0);
+                }
             }
 
             Minecraft minecraft = Minecraft.getMinecraft();
+            if(minecraft == null) {
+                GlStateManager.popMatrix();
+                return;
+            }
 
             if ((!mod.isToggled() || !sneak.isToggled()) && entitylivingbaseIn.isSneaking()) {
                 GlStateManager.translate(0.0F, 0.203125F, 0.0F);
             }
 
-            if (mod.isToggled() && mod.getBlockHitSetting().isToggled()) {
-            	
+            if (mod.isToggled() && mod.getBlockHitSetting() != null && mod.getBlockHitSetting().isToggled()) {
                 AbstractClientPlayer player = null;
                 if (entitylivingbaseIn instanceof AbstractClientPlayer) {
                     player = (AbstractClientPlayer) entitylivingbaseIn;
                 }
-                EnumAction var26;
-                if (player!= null && player.getItemInUseCount() > 0) {
-                    var26 = itemStack.getItemUseAction();
-                    if (var26 == EnumAction.BLOCK) {
+                
+                if (player != null && player.getItemInUseCount() > 0) {
+                    EnumAction enumAction = itemStack.getItemUseAction();
+                    if (enumAction == EnumAction.BLOCK) {
                         GlStateManager.translate(0.05F, 0.0F, -0.1F);
                         GlStateManager.rotate(-50.0F, 0.0F, 1.0F, 0.0F);
                         GlStateManager.rotate(-10.0F, 1.0F, 0.0F, 0.0F);
                         GlStateManager.rotate(-60.0F, 0.0F, 0.0F, 1.0F);
                     }
                 }
-
             }
-            
+
             Item item = itemStack.getItem();
-            
-            if (item instanceof ItemBlock && Block.getBlockFromItem(item).getRenderType() == 2) {
-                GlStateManager.translate(0.0F, 0.1875F, -0.3125F);
-                GlStateManager.rotate(20.0F, 1.0F, 0.0F, 0.0F);
-                GlStateManager.rotate(45.0F, 0.0F, 1.0F, 0.0F);
-                float f1 = 0.375F;
-                GlStateManager.scale(-f1, -f1, f1);
+            if(item == null) {
+                GlStateManager.popMatrix();
+                return;
             }
 
-            minecraft.getItemRenderer().renderItem(entitylivingbaseIn, itemStack, ItemCameraTransforms.TransformType.THIRD_PERSON);
-            
+            if (item instanceof ItemBlock) {
+                Block block = Block.getBlockFromItem(item);
+                if(block != null && block.getRenderType() == 2) {
+                    GlStateManager.translate(0.0F, 0.1875F, -0.3125F);
+                    GlStateManager.rotate(20.0F, 1.0F, 0.0F, 0.0F);
+                    GlStateManager.rotate(45.0F, 0.0F, 1.0F, 0.0F);
+                    float f1 = 0.375F;
+                    GlStateManager.scale(-f1, -f1, f1);
+                }
+            }
+
+            if(minecraft.getItemRenderer() != null) {
+                minecraft.getItemRenderer().renderItem(entitylivingbaseIn, itemStack, ItemCameraTransforms.TransformType.THIRD_PERSON);
+            }
+
             GlStateManager.popMatrix();
         }
     }

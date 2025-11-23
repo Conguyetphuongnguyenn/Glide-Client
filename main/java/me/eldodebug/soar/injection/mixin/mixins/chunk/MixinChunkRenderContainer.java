@@ -12,8 +12,10 @@ import net.minecraft.client.renderer.chunk.RenderChunk;
 @Mixin(ChunkRenderContainer.class)
 public class MixinChunkRenderContainer {
 
-	@Inject(method = "preRenderChunk", at = @At("RETURN"))
-	public void preRenderChunk(RenderChunk renderChunkIn, CallbackInfo callback) {
-		new EventPreRenderChunk(renderChunkIn).call();
-	}
+    @Inject(method = "preRenderChunk", at = @At("RETURN"))
+    public void preRenderChunk(RenderChunk renderChunkIn, CallbackInfo callback) {
+        if (renderChunkIn != null) {
+            new EventPreRenderChunk(renderChunkIn).call();
+        }
+    }
 }

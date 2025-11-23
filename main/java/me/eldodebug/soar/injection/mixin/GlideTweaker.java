@@ -19,7 +19,7 @@ public class GlideTweaker implements ITweaker {
 
     private final List<String> launchArguments = new ArrayList<>();
 
-	public static boolean hasOptifine = false;
+    public static volatile boolean hasOptifine = false;
 	
     @Override
     public void acceptOptions(List<String> args, File gameDir, File assetsDir, String profile) {

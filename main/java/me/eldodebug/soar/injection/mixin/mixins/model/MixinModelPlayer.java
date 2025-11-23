@@ -21,9 +21,10 @@ public class MixinModelPlayer extends ModelBase {
 
     @Inject(method = "renderCape", at = @At("HEAD"), cancellable = true)
     public void renderCloak(float p_renderCape_1_, CallbackInfo ci) {
-    	if(WaveyCapesMod.getInstance().isToggled()) {
-    		ci.cancel();
-    	}
+        WaveyCapesMod mod = WaveyCapesMod.getInstance();
+        if(mod != null && mod.isToggled()) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "<init>", at = @At("RETURN"))
@@ -34,14 +35,24 @@ public class MixinModelPlayer extends ModelBase {
 
     @Inject(method = "render", at = @At("RETURN"))
     public void render(Entity e, float v, float w, float x, float y, float z, float scale, CallbackInfo c) {
+        if(e == null || boobs == null) return;
+        
+        Minecraft mc = Minecraft.getMinecraft();
+        if(mc == null || mc.thePlayer == null) return;
+        
+        FemaleGenderMod mod = FemaleGenderMod.getInstance();
+        
         GlStateManager.pushMatrix();
-        boobs.showModel = FemaleGenderMod.getInstance().isToggled() && e == Minecraft.getMinecraft().thePlayer;
-        boobs.render(scale);
-        // move to pos when sneaking
-        boobs.offsetY = e.isSneaking() ? .25F : 0F;
-        boobs.offsetZ = e.isSneaking() ? .1F : 0F;
-        // rotate so they face up
-        boobs.rotateAngleX = 45;
+        
+        boobs.showModel = mod != null && mod.isToggled() && e == mc.thePlayer;
+        
+        if(boobs.showModel) {
+            boobs.render(scale);
+            boobs.offsetY = e.isSneaking() ? .25F : 0F;
+            boobs.offsetZ = e.isSneaking() ? .1F : 0F;
+            boobs.rotateAngleX = 45;
+        }
+        
         GlStateManager.popMatrix();
     }
 }

@@ -13,7 +13,7 @@ import net.minecraft.util.MouseHelper;
 @Mixin(MouseHelper.class)
 public class MixinMouseHelper {
 
-	@Shadow
+    @Shadow
     public int deltaX;
     
     @Shadow
@@ -21,14 +21,18 @@ public class MixinMouseHelper {
     
     @Inject(method = "mouseXYChange", at = @At("HEAD"), cancellable = true)
     public void onRawInput(CallbackInfo ci) {
-    	
-    	RawInputMod mod = RawInputMod.getInstance();
-    	
-    	if(mod.isToggled() && Mouse.isGrabbed() && mod.isAvailable()) {
-        	ci.cancel();
-        	deltaX = (int) mod.getDx();
-        	deltaY = (int) -mod.getDy();
-        	mod.getThread().reset();
-    	}
+        RawInputMod mod = RawInputMod.getInstance();
+        
+        if (mod == null) return;
+        
+        if (mod.isToggled() && Mouse.isGrabbed() && mod.isAvailable()) {
+            ci.cancel();
+            deltaX = (int) mod.getDx();
+            deltaY = (int) -mod.getDy();
+            
+            if (mod.getThread() != null) {
+                mod.getThread().reset();
+            }
+        }
     }
 }

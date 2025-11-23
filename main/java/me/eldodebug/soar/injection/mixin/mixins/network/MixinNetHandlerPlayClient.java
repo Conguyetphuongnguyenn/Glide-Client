@@ -17,6 +17,7 @@ import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.entity.Entity;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.client.C17PacketCustomPayload;
@@ -25,39 +26,52 @@ import net.minecraft.network.play.server.S19PacketEntityStatus;
 @Mixin(NetHandlerPlayClient.class)
 public class MixinNetHandlerPlayClient {
 
-	@Shadow
+    @Shadow
     private Minecraft gameController;
-	
-	@Shadow
-	private WorldClient clientWorldController;
-	
-	@Shadow
+
+    @Shadow
+    private WorldClient clientWorldController;
+
+    @Shadow
     private NetworkManager netManager;
-	
-	@Redirect(method = "handleJoinGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkManager;sendPacket(Lnet/minecraft/network/Packet;)V"))
-	public void sendBrand() {
-		
-		PacketBuffer data = new PacketBuffer(Unpooled.buffer()).writeString("GlideClient");
-		
-		if(ClientSpooferMod.getInstance().isToggled()) {
-			
-			ComboSetting setting = ClientSpooferMod.getInstance().getTypeSetting();
-        	Option type = setting.getOption();
-        	
-        	if(type.getTranslate().equals(TranslateText.VANILLA)) {
-        		data = new PacketBuffer(Unpooled.buffer()).writeString(ClientBrandRetriever.getClientModName());
-        	} else if(type.getTranslate().equals(TranslateText.FORGE)) {
-        		data = new PacketBuffer(Unpooled.buffer()).writeString("FML");
-        	}
-		}
-		
-		netManager.sendPacket(new C17PacketCustomPayload("MC|Brand", data));
-	}
-	
-	@Inject(method = "handleEntityStatus", at = @At("RETURN"))
-	public void postHandleEntityStatus(S19PacketEntityStatus packetIn, CallbackInfo callback) {
-		if(packetIn.getOpCode() == 2) {
-			new EventDamageEntity(packetIn.getEntity(clientWorldController)).call();
-		}
-	}
+
+    @Redirect(method = "handleJoinGame", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkManager;sendPacket(Lnet/minecraft/network/Packet;)V"))
+    public void sendBrand() {
+        PacketBuffer data = new PacketBuffer(Unpooled.buffer()).writeString("GlideClient");
+
+        ClientSpooferMod spoofer = ClientSpooferMod.getInstance();
+        if(spoofer != null && spoofer.isToggled()) {
+            ComboSetting setting = spoofer.getTypeSetting();
+            
+            if(setting != null) {
+                Option type = setting.getOption();
+                
+                if(type != null && type.getTranslate() != null) {
+                    TranslateText translate = type.getTranslate();
+                    
+                    if(translate.equals(TranslateText.VANILLA)) {
+                        data = new PacketBuffer(Unpooled.buffer()).writeString(ClientBrandRetriever.getClientModName());
+                    } else if(translate.equals(TranslateText.FORGE)) {
+                        data = new PacketBuffer(Unpooled.buffer()).writeString("FML");
+                    }
+                }
+            }
+        }
+
+        if(netManager != null) {
+            netManager.sendPacket(new C17PacketCustomPayload("MC|Brand", data));
+        }
+    }
+
+    @Inject(method = "handleEntityStatus", at = @At("RETURN"))
+    public void postHandleEntityStatus(S19PacketEntityStatus packetIn, CallbackInfo callback) {
+        if(packetIn == null || clientWorldController == null) return;
+        
+        if(packetIn.getOpCode() == 2) {
+            Entity entity = packetIn.getEntity(clientWorldController);
+            if(entity != null) {
+                new EventDamageEntity(entity).call();
+            }
+        }
+    }
 }

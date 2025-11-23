@@ -11,11 +11,14 @@ import net.minecraft.client.renderer.entity.layers.LayerArmorBase;
 @Mixin(LayerArmorBase.class)
 public class MixinLayerArmorBase {
 
-	@Inject(method = "shouldCombineTextures", at = @At("HEAD"), cancellable = true)
-	public void oldArmorDamage(CallbackInfoReturnable<Boolean> cir) {
-		
-		AnimationsMod mod = AnimationsMod.getInstance();
-		
-		cir.setReturnValue(mod.isToggled() && mod.getArmorDamageSetting().isToggled());
-	}
+    @Inject(method = "shouldCombineTextures", at = @At("HEAD"), cancellable = true)
+    public void oldArmorDamage(CallbackInfoReturnable<Boolean> cir) {
+        AnimationsMod mod = AnimationsMod.getInstance();
+        if(mod == null) {
+            cir.setReturnValue(false);
+            return;
+        }
+        
+        cir.setReturnValue(mod.isToggled() && mod.getArmorDamageSetting().isToggled());
+    }
 }

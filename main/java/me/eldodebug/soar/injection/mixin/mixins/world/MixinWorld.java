@@ -39,52 +39,60 @@ import net.minecraft.world.WorldProvider;
 @Mixin(World.class)
 public abstract class MixinWorld implements IMixinWorld {
 
-	@Shadow 
-	@Final 
-	public boolean isRemote;
-	
+    @Shadow 
+    @Final 
+    public boolean isRemote;
+    
     @Unique
     private int updateRange;
     
-	@Shadow
+    @Shadow
     public abstract boolean isAreaLoaded(BlockPos center, int radius, boolean allowEmpty);
-	
-	@Shadow
-	protected abstract boolean isChunkLoaded(int x, int z, boolean allowEmpty);
-	
+    
+    @Shadow
+    protected abstract boolean isChunkLoaded(int x, int z, boolean allowEmpty);
+    
     @Inject(method = "getRainStrength", at = @At("HEAD"), cancellable = true)
     public void preGetRainStrength(float delta, CallbackInfoReturnable<Float> cir) {
-    	
-    	WeatherChangerMod mod = WeatherChangerMod.getInstance();
-    	ComboSetting setting = mod.getWeatherSetting();
-    	Option weather = setting.getOption();
-    	
-        if (mod.isToggled() && weather.getTranslate().equals(TranslateText.CLEAR)) {
+        WeatherChangerMod mod = WeatherChangerMod.getInstance();
+        if (mod == null || !mod.isToggled()) return;
+        
+        ComboSetting setting = mod.getWeatherSetting();
+        if (setting == null) return;
+        
+        Option weather = setting.getOption();
+        if (weather == null || weather.getTranslate() == null) return;
+        
+        if (weather.getTranslate().equals(TranslateText.CLEAR)) {
             cir.setReturnValue(0f);
-        } else if (mod.isToggled()) {
+        } else {
             cir.setReturnValue(mod.getRainStrength().getValueFloat());
         }
     }
 
     @Inject(method = "getThunderStrength", at = @At("HEAD"), cancellable = true)
     public void preGgetThunderStrength(float delta, CallbackInfoReturnable<Float> cir) {
-    	
-    	WeatherChangerMod mod = WeatherChangerMod.getInstance();
-    	ComboSetting setting = mod.getWeatherSetting();
-    	Option weather = setting.getOption();
-    	
-        if (mod.isToggled() && !weather.getTranslate().equals(TranslateText.STORM)) {
+        WeatherChangerMod mod = WeatherChangerMod.getInstance();
+        if (mod == null || !mod.isToggled()) return;
+        
+        ComboSetting setting = mod.getWeatherSetting();
+        if (setting == null) return;
+        
+        Option weather = setting.getOption();
+        if (weather == null || weather.getTranslate() == null) return;
+        
+        if (!weather.getTranslate().equals(TranslateText.STORM)) {
             cir.setReturnValue(0f);
-        } else if (mod.isToggled()) {
+        } else {
             cir.setReturnValue(mod.getThunderStrength().getValueFloat());
         }
     }
     
-	@Override
-	public boolean isLoaded(int x, int z, boolean allowEmpty) {
-		return isChunkLoaded(x, z, allowEmpty);
-	}
-	
+    @Override
+    public boolean isLoaded(int x, int z, boolean allowEmpty) {
+        return isChunkLoaded(x, z, allowEmpty);
+    }
+    
     @ModifyVariable(method = "updateEntityWithOptionalForce", at = @At("STORE"), ordinal = 1)
     private boolean checkIfWorldIsRemoteBeforeForceUpdating(boolean isForced) {
         return isForced && !this.isRemote;
@@ -131,5 +139,4 @@ public abstract class MixinWorld implements IMixinWorld {
     public EnumFacing[] isBlockIndirectlyGettingPowered$getCachedArray() {
         return EnumFacings.FACINGS;
     }
-
 }

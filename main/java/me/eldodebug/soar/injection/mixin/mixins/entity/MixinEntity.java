@@ -16,36 +16,44 @@ import net.minecraft.world.World;
 
 @Mixin(Entity.class)
 public class MixinEntity {
-	
-    @Shadow 
+
+    @Shadow
     public boolean onGround;
 
     @Inject(method = "spawnRunningParticles", at = @At("HEAD"), cancellable = true)
     private void checkGroundState(CallbackInfo ci) {
         if (!this.onGround) {
-        	ci.cancel();
+            ci.cancel();
         }
     }
-    
+
     @Redirect(method = "getBrightnessForRender", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isBlockLoaded(Lnet/minecraft/util/BlockPos;)Z"))
     public boolean alwaysReturnTrue(World world, BlockPos pos) {
         return true;
     }
-    
-	@Inject(method = "setVelocity", at = @At("HEAD"))
+
+    @Inject(method = "setVelocity", at = @At("HEAD"))
     public void preSetVelocity(double x, double y, double z, CallbackInfo ci) {
-		if(DamageTiltMod.getInstance().isToggled()) {
-			if((Entity)(Object)this != null) {
-				EntityPlayer player = Minecraft.getMinecraft().thePlayer;
-				if(player != null && ((Entity)(Object)this).equals(player)) {
-					
-					float result = (float)(Math.atan2(player.motionZ - z, player.motionX - x) * (180D / Math.PI) - (double)player.rotationYaw);
-					
-					if(Float.isFinite(result)) {
-						player.attackedAtYaw = result;
-					}
-				}
-			}
-		}
-	}
+        DamageTiltMod mod = DamageTiltMod.getInstance();
+        if (mod == null || !mod.isToggled()) return;
+
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc == null || mc.thePlayer == null) return;
+
+        Entity self = (Entity)(Object)this;
+        if (self != mc.thePlayer) return;
+
+        EntityPlayer player = mc.thePlayer;
+        double dx = player.motionX - x;
+        double dz = player.motionZ - z;
+
+        if (dx == 0.0 && dz == 0.0) return;
+
+        double angleRadians = Math.atan2(dz, dx);
+        float result = (float)(Math.toDegrees(angleRadians) - player.rotationYaw);
+
+        if (Float.isFinite(result)) {
+            player.attackedAtYaw = result;
+        }
+    }
 }

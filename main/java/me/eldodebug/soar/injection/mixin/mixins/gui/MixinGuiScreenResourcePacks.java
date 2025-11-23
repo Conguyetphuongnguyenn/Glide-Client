@@ -15,9 +15,17 @@ public class MixinGuiScreenResourcePacks {
 
     @Inject(method = "actionPerformed", at = @At(value = "INVOKE", target = "Ljava/util/Collections;reverse(Ljava/util/List;)V", remap = false))
     private void clearHandles(CallbackInfo ci) {
-        ResourcePackRepository repository = Minecraft.getMinecraft().getResourcePackRepository();
+        Minecraft mc = Minecraft.getMinecraft();
+        if(mc == null) return;
+        
+        ResourcePackRepository repository = mc.getResourcePackRepository();
+        if(repository == null) return;
+        
         for (ResourcePackRepository.Entry entry : repository.getRepositoryEntries()) {
+            if(entry == null) continue;
+            
             IResourcePack current = repository.getResourcePackInstance();
+            
             if (current == null || !entry.getResourcePackName().equals(current.getPackName())) {
                 entry.closeResourcePack();
             }

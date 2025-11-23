@@ -12,7 +12,7 @@ import net.minecraft.nbt.NBTTagString;
 
 @Mixin(NBTTagString.class)
 public class MixinNBTTagString {
-	
+    
     @Shadow 
     private String data;
     
@@ -27,7 +27,11 @@ public class MixinNBTTagString {
     @Overwrite
     public String toString() {
         if (this.dataCache == null) {
-            this.dataCache = "\"" + this.data.replace("\"", "\\\"") + "\"";
+            if (this.data == null) {
+                this.dataCache = "\"\"";
+            } else {
+                this.dataCache = "\"" + this.data.replace("\"", "\\\"") + "\"";
+            }
         }
 
         return this.dataCache;

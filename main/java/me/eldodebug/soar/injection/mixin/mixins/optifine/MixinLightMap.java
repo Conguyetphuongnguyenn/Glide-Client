@@ -14,14 +14,16 @@ import net.minecraft.world.World;
 @Mixin(targets = "net.optifine.LightMap")
 public class MixinLightMap {
 
-	@Inject(method = "updateLightmap", at = @At("HEAD"), cancellable = true)
-	public void overrideGamma(World world, float torchFlickerX, int[] lmColors, boolean nightVision, CallbackInfoReturnable<Boolean> callback) {
+    @Inject(method = "updateLightmap", at = @At("HEAD"), cancellable = true)
+    public void overrideGamma(World world, float torchFlickerX, int[] lmColors, boolean nightVision, CallbackInfoReturnable<Boolean> callback) {
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc == null || mc.gameSettings == null) return;
 
-		EventGamma event = new EventGamma(Minecraft.getMinecraft().gameSettings.gammaSetting);
-		event.call();
+        EventGamma event = new EventGamma(mc.gameSettings.gammaSetting);
+        event.call();
 
-		if(event.getGamma() > 1) {
-			callback.setReturnValue(false);
-		}
-	}
+        if (event.getGamma() > 1) {
+            callback.setReturnValue(false);
+        }
+    }
 }

@@ -17,37 +17,45 @@ import net.minecraft.client.gui.GuiTextField;
 @Mixin(GuiChat.class)
 public class MixinGuiChat extends GuiScreen {
 
-	@Shadow
-	protected GuiTextField inputField;;
-	
-	@Inject(method = "drawScreen", at = @At("TAIL"))
-	public void postDrawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
-		if(ChatTranslateMod.getInstance().isToggled()) {
-			GuiChatHook.drawScreen(mouseX, mouseY, partialTicks);
-		}
-	}
-	
-	@Inject(method = "mouseClicked", at = @At("HEAD"))
-	public void preMouseClicked(int mouseX, int mouseY, int mouseButton, CallbackInfo ci) {
-		if(ChatTranslateMod.getInstance().isToggled()) {
-			GuiChatHook.mouseClicked(mouseX, mouseY, mouseButton);
-		}
-	}
-	
-	@Redirect(method = "keyTyped", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiChat;sendChatMessage(Ljava/lang/String;)V"))
-	public void cancelSendMessage() {
-		
-        String s = this.inputField.getText().trim();
+    @Shadow
+    protected GuiTextField inputField;
+
+    @Inject(method = "drawScreen", at = @At("TAIL"))
+    public void postDrawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+        ChatTranslateMod mod = ChatTranslateMod.getInstance();
+        if(mod != null && mod.isToggled()) {
+            GuiChatHook.drawScreen(mouseX, mouseY, partialTicks);
+        }
+    }
+
+    @Inject(method = "mouseClicked", at = @At("HEAD"))
+    public void preMouseClicked(int mouseX, int mouseY, int mouseButton, CallbackInfo ci) {
+        ChatTranslateMod mod = ChatTranslateMod.getInstance();
+        if(mod != null && mod.isToggled()) {
+            GuiChatHook.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+    }
+
+    @Redirect(method = "keyTyped", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiChat;sendChatMessage(Ljava/lang/String;)V"))
+    public void cancelSendMessage() {
+        if(inputField == null) return;
+        
+        String s = this.inputField.getText();
+        if(s == null) return;
+        
+        s = s.trim();
         
         if (s.length() > 0) {
-        	
-    		if(ChatTranslateMod.getInstance().isToggled() && GuiChatHook.isToggled()) {
-    			Multithreading.runAsync(() -> {
-    				GuiChatHook.sendTranslatedMessage(s);
-    			});
-    		} else {
-    			this.sendChatMessage(s);
-    		}
+            ChatTranslateMod mod = ChatTranslateMod.getInstance();
+            
+            if(mod != null && mod.isToggled() && GuiChatHook.isToggled()) {
+                final String message = s;
+                Multithreading.runAsync(() -> {
+                    GuiChatHook.sendTranslatedMessage(message);
+                });
+            } else {
+                this.sendChatMessage(s);
+            }
         }
-	}
+    }
 }

@@ -19,35 +19,50 @@ import net.minecraft.client.gui.GuiScreen;
 @Mixin(GuiScreen.class)
 public abstract class MixinGuiScreen {
 
-	@Shadow
+    @Shadow
     protected Minecraft mc;
-    
-	@Shadow
+
+    @Shadow
     public abstract void keyTyped(char typedChar, int keyCode);
-    
-	@Inject(method = "drawScreen", at = @At("TAIL"))
+
+    @Inject(method = "drawScreen", at = @At("TAIL"))
     public void postDrawScreen(int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
-		if(InternalSettingsMod.getInstance().getClickEffectsSetting().isToggled()) {
-			Glide.getInstance().getClickEffects().drawClickEffects();
-		}
-	}
-	
-	@Inject(method = "mouseClicked", at = @At("HEAD"))
-	public void preMouseClicked(int mouseX, int mouseY, int mouseButton, CallbackInfo ci) {
-		if(InternalSettingsMod.getInstance().getClickEffectsSetting().isToggled()) {
-			Glide.getInstance().getClickEffects().addClickEffect(mouseX, mouseY);
-		}
-		Sound.play("soar/audio/click.wav", true);
-	}
-	
-	@Overwrite
+        InternalSettingsMod settings = InternalSettingsMod.getInstance();
+        if(settings != null && settings.getClickEffectsSetting().isToggled()) {
+            Glide instance = Glide.getInstance();
+            if(instance != null && instance.getClickEffects() != null) {
+                instance.getClickEffects().drawClickEffects();
+            }
+        }
+    }
+
+    @Inject(method = "mouseClicked", at = @At("HEAD"))
+    public void preMouseClicked(int mouseX, int mouseY, int mouseButton, CallbackInfo ci) {
+        InternalSettingsMod settings = InternalSettingsMod.getInstance();
+        if(settings != null && settings.getClickEffectsSetting().isToggled()) {
+            Glide instance = Glide.getInstance();
+            if(instance != null && instance.getClickEffects() != null) {
+                instance.getClickEffects().addClickEffect(mouseX, mouseY);
+            }
+        }
+        
+        try {
+            Sound.play("soar/audio/click.wav", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Overwrite
     public void handleKeyboardInput() throws IOException {
         char c = Keyboard.getEventCharacter();
-        
+
         if ((Keyboard.getEventKey() == 0 && c >= ' ') || Keyboard.getEventKeyState()) {
             this.keyTyped(c, Keyboard.getEventKey());
         }
-        
-        mc.dispatchKeypresses();
+
+        if(mc != null) {
+            mc.dispatchKeypresses();
+        }
     }
 }

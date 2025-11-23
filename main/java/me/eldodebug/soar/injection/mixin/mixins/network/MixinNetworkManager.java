@@ -16,29 +16,30 @@ import net.minecraft.network.Packet;
 @Mixin(NetworkManager.class)
 public class MixinNetworkManager {
 
-	@Shadow
-	private Channel channel;
-	
+    @Shadow
+    private Channel channel;
+
     @Inject(method = "sendPacket(Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
     public void preSendPacket(Packet<?> packet, CallbackInfo ci) {
-    	
-	   	EventSendPacket event = new EventSendPacket(packet);
-    	event.call();
-    	
-    	if(event.isCancelled()) {
-    		ci.cancel();
-    	}
-    }
-    
-	@Inject(method = "channelRead0", at = @At("HEAD"), cancellable = true)
-    public void preChannelRead0(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
-		
-		EventReceivePacket event = new EventReceivePacket(packet);
-		event.call();
-		
-		if(event.isCancelled()) {
-			ci.cancel();
-		}
-	}
+        if(packet != null) {
+            EventSendPacket event = new EventSendPacket(packet);
+            event.call();
 
+            if(event.isCancelled()) {
+                ci.cancel();
+            }
+        }
+    }
+
+    @Inject(method = "channelRead0", at = @At("HEAD"), cancellable = true)
+    public void preChannelRead0(ChannelHandlerContext context, Packet<?> packet, CallbackInfo ci) {
+        if(packet != null) {
+            EventReceivePacket event = new EventReceivePacket(packet);
+            event.call();
+
+            if(event.isCancelled()) {
+                ci.cancel();
+            }
+        }
+    }
 }

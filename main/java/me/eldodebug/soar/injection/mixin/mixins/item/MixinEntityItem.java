@@ -12,13 +12,19 @@ import net.minecraft.item.ItemStack;
 @Mixin(EntityItem.class)
 public abstract class MixinEntityItem {
 
-	@Shadow
+    @Shadow
     public abstract ItemStack getEntityItem();
-	
-	@Inject(method = "searchForOtherItemsNearby", at = @At("HEAD"), cancellable = true)
-	private void combineFix(CallbackInfo ci) {
-		if (this.getEntityItem().stackSize >= this.getEntityItem().getMaxStackSize()) {
-			ci.cancel();
-		}
-	}
+
+    @Inject(method = "searchForOtherItemsNearby", at = @At("HEAD"), cancellable = true)
+    private void combineFix(CallbackInfo ci) {
+        ItemStack stack = this.getEntityItem();
+        if(stack == null) {
+            ci.cancel();
+            return;
+        }
+        
+        if (stack.stackSize >= stack.getMaxStackSize()) {
+            ci.cancel();
+        }
+    }
 }

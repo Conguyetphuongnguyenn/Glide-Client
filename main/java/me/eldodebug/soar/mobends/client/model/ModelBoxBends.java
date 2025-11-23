@@ -166,7 +166,7 @@ public class ModelBoxBends extends ModelBox{
 	
 	public void offsetTextureQuad(ModelRenderer argModel, int argID,float argX, float argY){
 		//System.out.println("Offseting the Texture");
-		if(argID >= 0 & argID < this.quads.length){
+		if(argID >= 0 && argID < this.quads.length){
 			this.quads[argID].vertexPositions[0].texturePositionX+=argX/argModel.textureWidth;
 			this.quads[argID].vertexPositions[1].texturePositionX+=argX/argModel.textureWidth;
 			this.quads[argID].vertexPositions[2].texturePositionX+=argX/argModel.textureWidth;

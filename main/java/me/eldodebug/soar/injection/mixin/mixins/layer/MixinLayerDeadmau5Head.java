@@ -13,16 +13,23 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(LayerDeadmau5Head.class)
 public abstract class MixinLayerDeadmau5Head {
 
-    @Final @Shadow private RenderPlayer playerRenderer;
+    @Final
+    @Shadow
+    private RenderPlayer playerRenderer;
 
-    /**
-     */
     @Overwrite
     public void doRenderLayer(AbstractClientPlayer e, float p_177141_2_, float p_177141_3_, float partialTicks, float p_177141_5_, float p_177141_6_, float p_177141_7_, float scale) {
-        if (e == Minecraft.getMinecraft().thePlayer && !e.isInvisible() && EarsMod.getInstance().isToggled()) {
+        if(e == null || playerRenderer == null) return;
+        
+        Minecraft mc = Minecraft.getMinecraft();
+        if(mc == null || mc.thePlayer == null) return;
+        
+        EarsMod mod = EarsMod.getInstance();
+        if(mod == null || !mod.isToggled()) return;
+        
+        if (e == mc.thePlayer && !e.isInvisible()) {
             EarsMod.drawLeft(e, partialTicks, playerRenderer);
             EarsMod.drawRight(e, partialTicks, playerRenderer);
         }
     }
-
 }

@@ -16,11 +16,11 @@ import net.minecraft.world.World;
 @Mixin(BlockRedstoneTorch.class)
 public class MixinBlockRedstoneTorch {
 
-	@Shadow
+    @Shadow
     private static Map<World, List<?>> toggles;
-	
-    @Inject(method = "<clinit>", at = @At(value="TAIL"))
-    private static void fixMemorry(CallbackInfo ci) {
-    	toggles = new WeakHashMap<World, List<?>>();
+    
+    @Inject(method = "<clinit>", at = @At(value = "TAIL"))
+    private static void fixMemoryLeak(CallbackInfo ci) {
+        toggles = new WeakHashMap<World, List<?>>();
     }
 }

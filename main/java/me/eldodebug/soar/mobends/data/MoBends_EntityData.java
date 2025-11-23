@@ -89,11 +89,11 @@ public class MoBends_EntityData {
 		this.ticks = (Minecraft.getMinecraft().thePlayer.ticksExisted+argPartialTicks);
 		
 		updatedThisFrame = false;
-		if(this.calcOnGround() & !this.onGround){
+		if(this.calcOnGround() && !this.onGround){
 			this.onTouchdown();
 			this.onGround = true;
 		}
-		if((!this.calcOnGround() & this.onGround) | (this.motion_prev.y <= 0 && this.motion.y-this.motion_prev.y > 0.4f && this.ticksAfterLiftoff > 2f)){
+		if((!this.calcOnGround() && this.onGround) || (this.motion_prev.y <= 0 &&&& this.motion.y-this.motion_prev.y > 0.4f &&&& this.ticksAfterLiftoff > 2f)){
 			this.onLiftoff();
 			this.onGround = false;
 		}
@@ -107,7 +107,7 @@ public class MoBends_EntityData {
 			this.alreadyPunched = false;
 		}
 		
-		if(this.motion_prev.y <= 0 && this.motion.y > 0){
+		if(this.motion_prev.y <= 0 &&&& this.motion.y > 0){
 			this.onThrowup();
 		}
 		

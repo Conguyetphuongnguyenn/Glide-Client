@@ -25,30 +25,33 @@ import net.minecraft.util.ResourceLocation;
 @Mixin(RenderItem.class)
 public abstract class MixinRenderItem {
 
-	@Shadow
-	public abstract void renderModel(IBakedModel model, int color);
-	
-	@Shadow
+    @Shadow
+    public abstract void renderModel(IBakedModel model, int color);
+
+    @Shadow
     private TextureManager textureManager;
-	
-	@Overwrite
-    private void renderEffect(IBakedModel model){
-		
-        int color = -8372020; 
+
+    @Overwrite
+    private void renderEffect(IBakedModel model) {
+        if(model == null || textureManager == null) return;
         
-        if(GlintColorMod.getInstance().isToggled()) {
-        	color = GlintColorMod.getInstance().getGlintColor().getRGB();
+        int color = -8372020;
+
+        GlintColorMod glintMod = GlintColorMod.getInstance();
+        if(glintMod != null && glintMod.isToggled()) {
+            color = glintMod.getGlintColor().getRGB();
         }
-        
+
         GlStateManager.depthMask(false);
-        
-        if(!ShinyPotsMod.getInstance().isToggled()) {
+
+        ShinyPotsMod shinyMod = ShinyPotsMod.getInstance();
+        if(shinyMod == null || !shinyMod.isToggled()) {
             GlStateManager.depthFunc(514);
         }
-        
+
         GlStateManager.disableLighting();
         GlStateManager.blendFunc(768, 1);
-        this.textureManager.bindTexture(new ResourceLocation("textures/misc/enchanted_item_glint.png"));
+        textureManager.bindTexture(new ResourceLocation("textures/misc/enchanted_item_glint.png"));
         GlStateManager.matrixMode(5890);
         GlStateManager.pushMatrix();
         GlStateManager.scale(8.0F, 8.0F, 8.0F);
@@ -67,25 +70,25 @@ public abstract class MixinRenderItem {
         GlStateManager.matrixMode(5888);
         GlStateManager.blendFunc(770, 771);
         GlStateManager.enableLighting();
-        
-        if(!ShinyPotsMod.getInstance().isToggled()) {
+
+        if(shinyMod == null || !shinyMod.isToggled()) {
             GlStateManager.depthFunc(515);
         }
-        
+
         GlStateManager.depthMask(true);
-        this.textureManager.bindTexture(TextureMap.locationBlocksTexture);
+        textureManager.bindTexture(TextureMap.locationBlocksTexture);
     }
-	
-	@Inject(method = "renderItemAndEffectIntoGUI", at = @At("HEAD"))
-	public void preRenderItemAndEffectIntoGUIhead(final ItemStack stack, int xPosition, int yPosition, CallbackInfo ci) {
+
+    @Inject(method = "renderItemAndEffectIntoGUI", at = @At("HEAD"))
+    public void preRenderItemAndEffectIntoGUIhead(final ItemStack stack, int xPosition, int yPosition, CallbackInfo ci) {
         GlStateManager.enableDepth();
-	}
-	
-	@Inject(method = "renderItemOverlayIntoGUI", at = @At("HEAD"))
-	public void preRenderItemOverlayIntoGUIhead(FontRenderer fr, ItemStack stack, int xPosition, int yPosition, String text, CallbackInfo ci) {
+    }
+
+    @Inject(method = "renderItemOverlayIntoGUI", at = @At("HEAD"))
+    public void preRenderItemOverlayIntoGUIhead(FontRenderer fr, ItemStack stack, int xPosition, int yPosition, String text, CallbackInfo ci) {
         GlStateManager.enableDepth();
-	}
-	
+    }
+
     @Redirect(method = "renderModel(Lnet/minecraft/client/resources/model/IBakedModel;ILnet/minecraft/item/ItemStack;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;"))
     private EnumFacing[] renderModel$getCachedArray() {
         return EnumFacings.FACINGS;

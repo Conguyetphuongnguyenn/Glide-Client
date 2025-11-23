@@ -13,9 +13,9 @@ import net.minecraft.block.properties.PropertyBool;
 public class MixinPropertyBool {
 
     @Unique
-    private static final ImmutableSet<Boolean> ALLOWED_VALUES = ImmutableSet.of(Boolean.valueOf(true), Boolean.valueOf(false));
+    private static final ImmutableSet<Boolean> ALLOWED_VALUES = ImmutableSet.of(Boolean.TRUE, Boolean.FALSE);
 
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableSet;of(Ljava/lang/Object;Ljava/lang/Object;)Lcom/google/common/collect/ImmutableSet;", remap=false))
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableSet;of(Ljava/lang/Object;Ljava/lang/Object;)Lcom/google/common/collect/ImmutableSet;", remap = false))
     private ImmutableSet<Boolean> useCached(Object first, Object second) {
         return ALLOWED_VALUES;
     }

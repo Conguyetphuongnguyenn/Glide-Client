@@ -16,7 +16,7 @@ public class MixinPropertyHelper implements ICachedHashcode {
     @Unique
     private int cachedHashcode;
 
-    @Inject(method= "<init>", at= @At("RETURN"))
+    @Inject(method = "<init>", at = @At("RETURN"))
     private void cacheHashcode(String p_i45652_1_, Class<?> p_i45652_2_, CallbackInfo ci) {
         this.cachedHashcode = this.hashCode();
     }

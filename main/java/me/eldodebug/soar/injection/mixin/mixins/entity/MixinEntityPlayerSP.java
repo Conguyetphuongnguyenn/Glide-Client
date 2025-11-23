@@ -13,24 +13,26 @@ import net.minecraft.client.entity.EntityPlayerSP;
 @Mixin(EntityPlayerSP.class)
 public class MixinEntityPlayerSP {
 
-	@Inject(method = "onUpdate", at = @At("HEAD"))
-	public void preOnUpdate(CallbackInfo ci) {
-		new EventUpdate().call();
-	}
-	
-	@Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
+    private static final EventUpdate CACHED_EVENT_UPDATE = new EventUpdate();
+    private static final EventMotionUpdate CACHED_EVENT_MOTION_UPDATE = new EventMotionUpdate();
+
+    @Inject(method = "onUpdate", at = @At("HEAD"))
+    public void preOnUpdate(CallbackInfo ci) {
+        CACHED_EVENT_UPDATE.call();
+    }
+
+    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
     public void preSendChatMessage(String message, CallbackInfo ci) {
-		
-		EventSendChat event = new EventSendChat(message);
-		event.call();
-		
-		if(event.isCancelled()) {
-			ci.cancel();
-		}
-	}
-	
-	@Inject(method = "onUpdateWalkingPlayer", at = @At("HEAD"))
-	private void preOnUpdateWalkingPlayer(CallbackInfo ci) {
-		new EventMotionUpdate().call();
-	}
+        if(message == null || message.isEmpty()) return;
+        EventSendChat event = new EventSendChat(message);
+        event.call();
+        if(event.isCancelled()) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "onUpdateWalkingPlayer", at = @At("HEAD"))
+    private void preOnUpdateWalkingPlayer(CallbackInfo ci) {
+        CACHED_EVENT_MOTION_UPDATE.call();
+    }
 }
